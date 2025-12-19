@@ -1,0 +1,73 @@
+
+/* 
+  Chaos Age: Card Battles - Database Schema (SQL)
+*/
+
+-- Справочник способностей
+CREATE TABLE abilities (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    behavior ENUM('HEAL_HERO', 'DAMAGE_ENEMY_HERO', 'BUFF_SELF', 'DRAW_CARD', 'TAUNT', 'CHARGE', 'DIVINE_SHIELD', 'POISON', 'DISCOVER', 'SPELL_DAMAGE', 'SPELL_HEAL', 'SPELL_AOE_ENEMY', 'SPELL_BUFF', 'FREEZE_TARGET') NOT NULL,
+    target_requirement ENUM('ANY', 'FRIENDLY', 'ENEMY', 'NONE') DEFAULT 'ANY',
+    description_template TEXT
+);
+
+-- Таблица карт (Метаданные)
+CREATE TABLE cards (
+    id VARCHAR(100) PRIMARY KEY,
+    monster_id VARCHAR(50) NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    src VARCHAR(255) NOT NULL,
+    type ENUM('MINION', 'SPELL') NOT NULL,
+    rank ENUM('BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND') DEFAULT 'BRONZE',
+    base_cost INT DEFAULT 0,
+    base_attack INT DEFAULT 0,
+    base_health INT DEFAULT 0,
+    base_armor INT DEFAULT 0,
+    is_unlocked BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Связь карт и их способностей
+CREATE TABLE card_abilities (
+    card_id VARCHAR(100),
+    ability_id VARCHAR(50),
+    value INT DEFAULT 0,
+    PRIMARY KEY (card_id, ability_id),
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+    FOREIGN KEY (ability_id) REFERENCES abilities(id) ON DELETE CASCADE
+);
+
+-- Логи предупреждений боя (для аналитики админа)
+CREATE TABLE battle_warnings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    battle_id VARCHAR(50),
+    card_id VARCHAR(100),
+    unknown_ability_id VARCHAR(50),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Инвентарь пользователей
+CREATE TABLE user_inventory (
+    user_id CHAR(36),
+    card_id VARCHAR(100),
+    count INT DEFAULT 0,
+    PRIMARY KEY (user_id, card_id),
+    INDEX (user_id)
+);
+
+-- Колоды
+CREATE TABLE decks (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    name VARCHAR(100) DEFAULT 'Новая колода',
+    is_active BOOLEAN DEFAULT FALSE
+);
+
+-- Состав колод
+CREATE TABLE deck_cards (
+    deck_id CHAR(36),
+    card_id VARCHAR(100),
+    PRIMARY KEY (deck_id, card_id),
+    FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
+);
